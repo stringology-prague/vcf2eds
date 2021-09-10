@@ -95,8 +95,8 @@ if __name__ == "__main__":
                     type='int', help="Maximum depth of recursive segments")
     parser.add_option('-l', '--length', dest="length", default=1000, metavar='NUMBER',
                     type='int', help="Length of EDS - degenerate segments add to length with its first element")
-    parser.add_option('-o', '--output', dest="output", metavar='FILE', default='output.eds',
-                    help='Store generated file to given file')
+    parser.add_option('--decorate-output', dest="decorateoutput", default=False, action='store_true',
+                    help='Append parameters and file type to the output filename')
 
     (options, args) = parser.parse_args()
 
@@ -118,6 +118,10 @@ if __name__ == "__main__":
     if options.probability < 0 or options.probability > 1:
         raise Exception('Probability can be only from interval [0, 1] including 0 and 1.')
 
+    output_fname = args[0]
+    if options.decorateoutput:
+        output_fname = f"{output_fname}_p={options.probability:0.2f}_e={options.average:06.2f}_n={options.number:06.2f}_r={options.reds_prob:0.2f}_l={options.length:010}.eds"
+
     print('  alphabet: {} [{}]'.format(options.alphabet, alphabet))
     print('  weights: {} {}'.format(options.freqfile, weights))
     print('  Degenerate segment pp: {}'.format(options.probability))
@@ -128,7 +132,8 @@ if __name__ == "__main__":
     print('  REDS segment pp: {}'.format(options.reds_prob))
     print('  Maximum REDS depth: {}'.format(options.max_reds_depth))
     print('  EDS length: {}'.format(options.length))
-    print('  EDS output file: {}'.format(options.output))
+    print('  EDS output file: {}'.format(args[0]))
+    print('  EDS output file decorated: {}'.format(output_fname))
 
     eds_str = ''
     i = 0
@@ -148,5 +153,6 @@ if __name__ == "__main__":
             eds_str += random.choices(alphabet, weights=weights, k=1)[0]
             i += 1
 
-    with open(options.output, "w") as output_file:
-        print(eds_str, file=output_file)
+
+    with open(output_fname, "w") as f:
+        f.write(eds_str)
