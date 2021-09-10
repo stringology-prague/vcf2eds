@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <vector>
 #include <ostream>
+#include <memory>
 
 using BitVectorType = BitVector<char>;
 

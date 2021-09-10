@@ -5,7 +5,8 @@
 #include <initializer_list>
 #include <stdexcept>
 #include <vector>
-#include <sstream>
+#include <cassert>
+#include <algorithm>
 #include <iostream>
 
 std::ostream & operator << (std::ostream & os, const EDS & eds)
