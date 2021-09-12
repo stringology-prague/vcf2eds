@@ -20,12 +20,12 @@ class AverageSettings:
                                 math.log2(self.number) if self.number >= 1 else self.number,
                                 self.number_dev)
     
-    def get_number(self):
+    def generate_segment_size(self):
         number = int(math.fabs(random.gauss(self.number, self.number_dev)))
         # print('number - {}'.format(number))
         return number
     
-    def get_length(self, max_length=None):
+    def generate_element_length(self, max_length=None):
         rnd_length = int(math.fabs(random.gauss(self.length, self.length_dev)))
         if max_length is not None and rnd_length > max_length:
             return max_length
@@ -33,44 +33,38 @@ class AverageSettings:
         return rnd_length
 
 
-def get_random_string(alphabet, weights, length):
-    return ''.join(random.choices(alphabet, weights=weights, k=length))
-
-
 def get_degenerate_segment(options, alphabet, weights, curr_depth, avg_settings, max_length=None):
-    # print('----- RECURSIVE CALL ------')
-    if curr_depth == options.max_reds_depth:
-        return [get_random_string(alphabet, weights, avg_settings.get_length(max_length))]
+    segment = []
+    segment_size = max(1, avg_settings.generate_segment_size())
 
-    degenerate_segment = []
+    for _ in range(segment_size):
+        element_len = avg_settings.generate_element_length(max_length)
 
-    number_of_items = avg_settings.get_number()
-    for _ in range(number_of_items):
-        segment_length = avg_settings.get_length(max_length)
+        # Recursive EDS mode
+        if options.reds_prob > 0 and curr_depth < options.max_reds_depth:
+            element = ''
+            i = 0
+            while i < element_len:
+                if random.random() < options.reds_prob:
+                    data = get_degenerate_segment(options, alphabet, weights, curr_depth + 1,
+                                                  avg_settings.create_reduced_copy(), element_len)
 
-        segment_str = ''
-        i = 0
-        while i < segment_length:
-            if random.random() < options.reds_prob:
-                data = get_degenerate_segment(options, alphabet, weights, curr_depth + 1, avg_settings.create_reduced_copy(), segment_length)
+                    if len(data) == 1:
+                        element += data[0]
+                    else:
+                        element += '{' + ','.join(data) + '}'
 
-                if len(data) == 1:
-                    segment_str += data[0]
+                    i += len(data[0])
                 else:
-                    segment_str += '{' + ','.join(data) + '}'
+                    element += random.choices(alphabet, weights=weights, k=1)[0]
+                    i += 1
+        # EDS mode
+        else:
+            element = ''.join(random.choices(alphabet, weights=weights, k=element_len))
 
-                i += len(data[0])
-            else:
-                segment_str += random.choices(alphabet, weights=weights, k=1)[0]
-                i += 1
-
-        degenerate_segment.append(segment_str)
-
-    if len(degenerate_segment) == 0:
-        degenerate_segment.append(get_random_string(alphabet, weights, avg_settings.get_length(max_length)))
-    
-    # print('----- END ------')
-    return degenerate_segment
+        # Add new element to the segment
+        segment.append(element)
+    return segment
 
 
 if __name__ == "__main__":
@@ -120,7 +114,12 @@ if __name__ == "__main__":
 
     output_fname = args[0]
     if options.decorateoutput:
-        output_fname = f"{output_fname}_p={options.probability:0.2f}_e={options.average:06.2f}_n={options.number:06.2f}_r={options.reds_prob:0.2f}_l={options.length:010}.eds"
+        output_fname = f"{output_fname}_" \
+                       f"p={options.probability:0.2f}_" \
+                       f"e={options.average:06.2f}_" \
+                       f"n={options.number:06.2f}_" \
+                       f"r={options.reds_prob:0.2f}_" \
+                       f"l={options.length:010}.eds"
 
     print('  alphabet: {} [{}]'.format(options.alphabet, alphabet))
     print('  weights: {} {}'.format(options.freqfile, weights))
@@ -152,7 +151,6 @@ if __name__ == "__main__":
         else:
             eds_str += random.choices(alphabet, weights=weights, k=1)[0]
             i += 1
-
 
     with open(output_fname, "w") as f:
         f.write(eds_str)
