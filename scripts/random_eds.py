@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     parser.add_option('-l', '--length', dest="length",
                       default=1000, metavar='NUMBER', type='int',
-                      help="Length of EDS - degenerate segments add to length with its first element")
+                      help="Length of EDS - degenerate segments add to length with its longest element")
 
     parser.add_option('--decorate-output', dest="decorateoutput",
                       default=False, action='store_true',
@@ -177,7 +177,7 @@ if __name__ == "__main__":
             else:
                 eds_str += '{' + ','.join(degenerate_segment) + '}'
 
-            i += len(degenerate_segment[0])
+            i += max([len(s) for s in degenerate_segment])
         else:
             eds_str += random.choices(alphabet, weights=weights, k=1)[0]
             i += 1
