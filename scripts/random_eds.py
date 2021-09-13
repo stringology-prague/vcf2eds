@@ -69,32 +69,54 @@ def get_degenerate_segment(options, alphabet, weights, curr_depth, avg_settings,
 
 if __name__ == "__main__":
     parser = OptionParser()
+
+    parser.add_option('-l', '--length', dest="length",
+                      default=1000, metavar='NUMBER', type='int',
+                      help="Length of EDS - degenerate segments add to length with its first element")
+
+    parser.add_option('--decorate-output', dest="decorateoutput",
+                      default=False, action='store_true',
+                      help='Append parameters and file type to the output filename')
+
+    # Alphabet options
     parser.add_option('-a', '--alphabet', dest='alphabet',
-                    help="Alphabet type (valid values: D for DNA, P for Protein")
+                      help="Alphabet type (valid values: D for DNA, P for Protein")
     parser.add_option('-f', '--freq-file', dest='freqfile',
-                    help="Frequency file of the alphabet symbols (see protein.freq for example)")
-    parser.add_option('-p', '--probability', dest="probability", default=0.15, metavar='NUMBER',
-                    type='float', help="Probability of degenerate segment on each position")
-    parser.add_option('-e', '--average', dest="average", default=15, metavar='NUMBER',
-                    type='int', help="Gaussian distribution mean of the length of degenerate segment")
-    parser.add_option('-d', '--deviation', dest="deviation", default=0.5, metavar='NUMBER',
-                    type='float', help="Gaussian distribution standard deviation of the length of degenerate segment")
-    parser.add_option('-n', '--number', dest="number", default=4, metavar='NUMBER',
-                    type='int', help="Gaussian distribution mean of the number of string in degenerate segment")
-    parser.add_option('-m', '--ndeviation', dest="number_deviation", default=0.5, metavar='NUMBER',
-                    type='float', help="Gaussian distribution standard deviation of the number of string in degenerate segment")
-    parser.add_option('-r', '--recursive', dest="reds_prob", default=0.1, metavar='NUMBER',
-                    type='float', help="Probability of starting recursive segment")
-    parser.add_option('-b', '--maxdepth', dest="max_reds_depth", default=5, metavar='NUMBER',
-                    type='int', help="Maximum depth of recursive segments")
-    parser.add_option('-l', '--length', dest="length", default=1000, metavar='NUMBER',
-                    type='int', help="Length of EDS - degenerate segments add to length with its first element")
-    parser.add_option('--decorate-output', dest="decorateoutput", default=False, action='store_true',
-                    help='Append parameters and file type to the output filename')
+                      help="Frequency file of the alphabet symbols (see protein.freq for example)")
+
+    # Structural options
+    parser.add_option('-p', '--deg-prob', dest="deg_prob",
+                      default=0.15, metavar='NUMBER', type='float',
+                      help="Probability of degenerate segment on each position")
+    parser.add_option('-r', '--rec-prob', dest="reds_prob",
+                      default=0.0, metavar='NUMBER', type='float',
+                      help="Probability of starting recursive segment")
+    parser.add_option('-b', '--rec-max-depth', dest="max_reds_depth",
+                      default=5, metavar='NUMBER', type='int',
+                      help="Maximum depth of recursive segments")
+
+    # Segment size options
+    parser.add_option('-n', '--segment-size-avg', dest="segment_size_avg",
+                      default=4, metavar='NUMBER', type='int',
+                      help="Gaussian distribution mean of the number of string in degenerate segment")
+    parser.add_option('-m', '--segment-size-stdev', dest="segment_size_stdev",
+                      default=0.5, metavar='NUMBER', type='float',
+                      help="Gaussian distribution standard deviation of the number of string in degenerate segment")
+
+    # Element length options
+    parser.add_option('-e', '--element-len-avg', dest="element_len_avg",
+                      default=15, metavar='NUMBER', type='int',
+                      help="Gaussian distribution mean of the length of degenerate element")
+    parser.add_option('-d', '--element-len-stdev', dest="element_len_stdev",
+                      default=0.5, metavar='NUMBER', type='float',
+                      help="Gaussian distribution standard deviation of the length of degenerate element")
 
     (options, args) = parser.parse_args()
 
     print('Random EDS string generator 0.5')
+
+    if options.alphabet and options.freqfile:
+        raise Exception('Cannot specify alphabet and weights file at the same time; weights file defines alphabet.')
 
     alphabet = DNA_ALPHABET
     if options.alphabet == 'P':
@@ -109,37 +131,40 @@ if __name__ == "__main__":
             sum_weights = sum([int(f[0]) for f in freqs])
             weights = [float(f[0]) / sum_weights for f in freqs]
 
-    if options.probability < 0 or options.probability > 1:
+    if options.deg_prob < 0 or options.deg_prob > 1:
         raise Exception('Probability can be only from interval [0, 1] including 0 and 1.')
 
     output_fname = args[0]
     if options.decorateoutput:
         output_fname = f"{output_fname}_" \
-                       f"p={options.probability:0.2f}_" \
-                       f"e={options.average:06.2f}_" \
-                       f"n={options.number:06.2f}_" \
+                       f"p={options.deg_prob:0.2f}_" \
                        f"r={options.reds_prob:0.2f}_" \
+                       f"s={options.segment_size_avg:06.2f}_" \
+                       f"e={options.element_len_avg:06.2f}_" \
                        f"l={options.length:010}.eds"
 
-    print('  alphabet: {} [{}]'.format(options.alphabet, alphabet))
-    print('  weights: {} {}'.format(options.freqfile, weights))
-    print('  Degenerate segment pp: {}'.format(options.probability))
-    print('  Gauss avg. length: {}'.format(options.average))
-    print('  Gauss standard deviation length: {}'.format(options.deviation))
-    print('  Gauss avg. number: {}'.format(options.number))
-    print('  Gauss standard deviation number: {}'.format(options.number_deviation))
-    print('  REDS segment pp: {}'.format(options.reds_prob))
-    print('  Maximum REDS depth: {}'.format(options.max_reds_depth))
     print('  EDS length: {}'.format(options.length))
+    print('  Alphabet: {} [{}]'.format(options.alphabet, alphabet))
+    print('  Weights: {} {}'.format(options.freqfile, weights))
+    print('  Degenerate segment probability: {}'.format(options.deg_prob))
+    print('  Recursive segment probability: {}'.format(options.reds_prob))
+    print('  Maximum recursive depth: {}'.format(options.max_reds_depth))
+    print('  Segment size - gauss distribution average: {}'.format(options.segment_size_avg))
+    print('  Segment size - gauss distribution standard deviation: {}'.format(options.element_len_stdev))
+    print('  Element length - gauss distribution average: {}'.format(options.element_len_avg))
+    print('  Element length - gauss distribution standard deviation: {}'.format(options.element_len_stdev))
     print('  EDS output file: {}'.format(args[0]))
     print('  EDS output file decorated: {}'.format(output_fname))
 
     eds_str = ''
     i = 0
     while i < options.length:
-        if random.random() < options.probability:
+        if random.random() < options.deg_prob:
             # degenerate segment
-            avg_settings = AverageSettings(options.average, options.deviation, options.number, options.number_deviation)
+            avg_settings = AverageSettings(options.element_len_avg,
+                                           options.element_len_stdev,
+                                           options.segment_size_avg,
+                                           options.element_len_stdev)
             degenerate_segment = get_degenerate_segment(options, alphabet, weights, 0, avg_settings)
 
             if len(degenerate_segment) == 1:
