@@ -97,10 +97,10 @@ if __name__ == "__main__":
 
     # Segment size options
     parser.add_option('-n', '--segment-size-avg', dest="segment_size_avg",
-                      default=4, metavar='NUMBER', type='int',
+                      default=5, metavar='NUMBER', type='int',
                       help="Gaussian distribution mean of the number of string in degenerate segment")
     parser.add_option('-m', '--segment-size-stdev', dest="segment_size_stdev",
-                      default=0.5, metavar='NUMBER', type='float',
+                      default=2.5, metavar='NUMBER', type='float',
                       help="Gaussian distribution standard deviation of the number of string in degenerate segment")
     parser.add_option('--segment-size-max', dest="segment_size_max",
                       default=sys.maxsize, metavar='NUMBER', type='int',
@@ -112,10 +112,10 @@ if __name__ == "__main__":
 
     # Element length options
     parser.add_option('-e', '--element-len-avg', dest="element_len_avg",
-                      default=15, metavar='NUMBER', type='int',
+                      default=5, metavar='NUMBER', type='int',
                       help="Gaussian distribution mean of the length of degenerate element")
     parser.add_option('-d', '--element-len-stdev', dest="element_len_stdev",
-                      default=0.5, metavar='NUMBER', type='float',
+                      default=2.5, metavar='NUMBER', type='float',
                       help="Gaussian distribution standard deviation of the length of degenerate element")
     parser.add_option('--element-len-max', dest="element_len_max",
                       default=sys.maxsize, metavar='NUMBER', type='int',
@@ -147,10 +147,10 @@ if __name__ == "__main__":
     output_fname = args[0]
     if options.decorateoutput:
         output_fname = f"{output_fname}_" \
-                       f"p={options.deg_prob:0.2f}_" \
-                       f"r={options.reds_prob:0.2f}_" \
-                       f"s={options.segment_size_avg:06.2f}_" \
-                       f"e={options.element_len_avg:06.2f}_" \
+                       f"p={options.deg_prob:0.5f}_" \
+                       f"r={options.reds_prob:0.5f}_" \
+                       f"s={options.segment_size_avg:07.2f}_" \
+                       f"e={options.element_len_avg:07.2f}_" \
                        f"l={options.length:010}.eds"
 
     print('  EDS length: {}'.format(options.length))
