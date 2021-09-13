@@ -1,44 +1,44 @@
 from optparse import OptionParser
+import copy
 import csv
 import random
 import math
+import sys
 
 DNA_ALPHABET = 'ACGT'
 PROTEIN_ALPHABET = 'ACDEFGHIKLMNPQRSTVWY'
 
 
 class AverageSettings:
-    def __init__(self, length, length_dev, number, number_dev):
+    def __init__(self, length, length_dev, length_max, number, number_dev, number_max):
         self.length = length
         self.length_dev = length_dev
+        self.length_max = length_max
         self.number = number
         self.number_dev = number_dev
+        self.number_max = number_max
 
     def create_reduced_copy(self):
         return AverageSettings(math.log2(self.length) if self.length >= 1 else self.length,
-                                self.length_dev,
-                                math.log2(self.number) if self.number >= 1 else self.number,
-                                self.number_dev)
+                               self.length_dev,
+                               math.ceil(self.length_max/2),
+                               math.log2(self.number) if self.number >= 1 else self.number,
+                               self.number_dev,
+                               math.ceil(self.number_max/2))
     
     def generate_segment_size(self):
-        number = int(math.fabs(random.gauss(self.number, self.number_dev)))
-        # print('number - {}'.format(number))
-        return number
-    
-    def generate_element_length(self, max_length=None):
-        rnd_length = int(math.fabs(random.gauss(self.length, self.length_dev)))
-        if max_length is not None and rnd_length > max_length:
-            return max_length
+        return max(1, min(self.number_max, int(math.fabs(random.gauss(self.number, self.number_dev)))))
 
-        return rnd_length
+    def generate_element_length(self):
+        return max(1, min(self.length_max, int(math.fabs(random.gauss(self.length, self.length_dev)))))
 
 
-def get_degenerate_segment(options, alphabet, weights, curr_depth, avg_settings, max_length=None):
+def get_degenerate_segment(options, alphabet, weights, curr_depth, avg_settings):
     segment = []
     segment_size = max(2 if options.segment_size_force_min else 1, avg_settings.generate_segment_size())
 
     for _ in range(segment_size):
-        element_len = avg_settings.generate_element_length(max_length)
+        element_len = avg_settings.generate_element_length()
 
         # Recursive EDS mode
         if options.reds_prob > 0 and curr_depth < options.max_reds_depth:
@@ -47,7 +47,7 @@ def get_degenerate_segment(options, alphabet, weights, curr_depth, avg_settings,
             while i < element_len:
                 if random.random() < options.reds_prob:
                     data = get_degenerate_segment(options, alphabet, weights, curr_depth + 1,
-                                                  avg_settings.create_reduced_copy(), element_len)
+                                                  avg_settings.create_reduced_copy())
 
                     if len(data) == 1:
                         element += data[0]
@@ -102,6 +102,9 @@ if __name__ == "__main__":
     parser.add_option('-m', '--segment-size-stdev', dest="segment_size_stdev",
                       default=0.5, metavar='NUMBER', type='float',
                       help="Gaussian distribution standard deviation of the number of string in degenerate segment")
+    parser.add_option('--segment-size-max', dest="segment_size_max",
+                      default=sys.maxsize, metavar='NUMBER', type='int',
+                      help="Maximum number of string in degenerate segment")
     parser.add_option('--segment-size-no-force-min', dest="segment_size_force_min",
                       default=True, action='store_false',
                       help="Disables forced minimum segment size of 2 elements. This allows for segments of size 1 to "
@@ -114,6 +117,9 @@ if __name__ == "__main__":
     parser.add_option('-d', '--element-len-stdev', dest="element_len_stdev",
                       default=0.5, metavar='NUMBER', type='float',
                       help="Gaussian distribution standard deviation of the length of degenerate element")
+    parser.add_option('--element-len-max', dest="element_len_max",
+                      default=sys.maxsize, metavar='NUMBER', type='int',
+                      help="Maximum length of degenerate element")
 
     (options, args) = parser.parse_args()
 
@@ -154,10 +160,12 @@ if __name__ == "__main__":
     print('  Recursive segment probability: {}'.format(options.reds_prob))
     print('  Maximum recursive depth: {}'.format(options.max_reds_depth))
     print('  Segment size - gauss distribution average: {}'.format(options.segment_size_avg))
-    print('  Segment size - gauss distribution standard deviation: {}'.format(options.element_len_stdev))
+    print('  Segment size - gauss distribution standard deviation: {}'.format(options.segment_size_stdev))
+    print('  Segment size - maximum: {}'.format(options.segment_size_max))
     print('  Segment size - force minimum segment size of 2: {}'.format(options.segment_size_force_min))
     print('  Element length - gauss distribution average: {}'.format(options.element_len_avg))
     print('  Element length - gauss distribution standard deviation: {}'.format(options.element_len_stdev))
+    print('  Element length - maximum: {}'.format(options.element_len_max))
     print('  EDS output file: {}'.format(args[0]))
     print('  EDS output file decorated: {}'.format(output_fname))
 
@@ -168,8 +176,10 @@ if __name__ == "__main__":
             # degenerate segment
             avg_settings = AverageSettings(options.element_len_avg,
                                            options.element_len_stdev,
+                                           options.element_len_max,
                                            options.segment_size_avg,
-                                           options.element_len_stdev)
+                                           options.segment_size_stdev,
+                                           options.segment_size_max)
             degenerate_segment = get_degenerate_segment(options, alphabet, weights, 0, avg_settings)
 
             if len(degenerate_segment) == 1:
@@ -177,6 +187,7 @@ if __name__ == "__main__":
             else:
                 eds_str += '{' + ','.join(degenerate_segment) + '}'
 
+            # TODO recursive segments include special characters '{', ',' and '}' in the total sub-segment length
             i += max([len(s) for s in degenerate_segment])
         else:
             eds_str += random.choices(alphabet, weights=weights, k=1)[0]
