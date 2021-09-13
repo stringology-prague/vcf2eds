@@ -35,7 +35,7 @@ class AverageSettings:
 
 def get_degenerate_segment(options, alphabet, weights, curr_depth, avg_settings, max_length=None):
     segment = []
-    segment_size = max(1, avg_settings.generate_segment_size())
+    segment_size = max(2 if options.segment_size_force_min else 1, avg_settings.generate_segment_size())
 
     for _ in range(segment_size):
         element_len = avg_settings.generate_element_length(max_length)
@@ -102,6 +102,10 @@ if __name__ == "__main__":
     parser.add_option('-m', '--segment-size-stdev', dest="segment_size_stdev",
                       default=0.5, metavar='NUMBER', type='float',
                       help="Gaussian distribution standard deviation of the number of string in degenerate segment")
+    parser.add_option('--segment-size-no-force-min', dest="segment_size_force_min",
+                      default=True, action='store_false',
+                      help="Disables forced minimum segment size of 2 elements. This allows for segments of size 1 to "
+                           "be embedded into the parent string, effectively reducing degenerate probability.")
 
     # Element length options
     parser.add_option('-e', '--element-len-avg', dest="element_len_avg",
@@ -151,6 +155,7 @@ if __name__ == "__main__":
     print('  Maximum recursive depth: {}'.format(options.max_reds_depth))
     print('  Segment size - gauss distribution average: {}'.format(options.segment_size_avg))
     print('  Segment size - gauss distribution standard deviation: {}'.format(options.element_len_stdev))
+    print('  Segment size - force minimum segment size of 2: {}'.format(options.segment_size_force_min))
     print('  Element length - gauss distribution average: {}'.format(options.element_len_avg))
     print('  Element length - gauss distribution standard deviation: {}'.format(options.element_len_stdev))
     print('  EDS output file: {}'.format(args[0]))
