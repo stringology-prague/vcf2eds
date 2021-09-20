@@ -3,13 +3,13 @@
 Generate DNA dataset with total length scaling
 
 ```bash
-for LEN in 100000 200000 400000 800000 1600000; do python3 random_eds.py --length $LEN --alphabet D --deg-prob 0.1 --segment-size-avg 5 --segment-size-max 10 --element-len-avg 5 --element-len-max 10 --decorate-output "synth-dna"; done
+while read LEN; do python3 random_eds.py --length $LEN --alphabet D --deg-prob 0.1 --segment-size-avg 5 --segment-size-max 10 --element-len-avg 5 --element-len-max 10 --decorate-output "synth-dna"; done < lengths.list
 ```
 
 Generate protein dataset with total length scaling
 
 ```bash
-for LEN in 100000 200000 400000 800000 1600000; do python3 random_eds.py --length $LEN --freq-file protein.freq --deg-prob 0.1 --segment-size-avg 5 --segment-size-max 10 --element-len-avg 5 --element-len-max 10 --decorate-output "synth-protein"; done
+while read LEN; do python3 random_eds.py --length $LEN --freq-file protein.freq --deg-prob 0.1 --segment-size-avg 5 --segment-size-max 10 --element-len-avg 5 --element-len-max 10 --decorate-output "synth-protein"; done < lengths.list 
 ```
 
 Generate DNA dataset with degenerate symbol probability scaling 
