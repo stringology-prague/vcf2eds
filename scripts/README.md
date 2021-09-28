@@ -24,8 +24,14 @@ Generate DNA dataset with average segment size scaling (the overall length here 
 while read SEG_SIZE; do python3 random_eds.py --length 100000 --alphabet D --deg-prob 0.1 --segment-size-avg $SEG_SIZE --element-len-avg 5 --element-len-max 10 --decorate-output "synth-seg-size-avg"; done < seg-size-avg.list
 ```
 
-Generate DNA dataset with average element length scaling 
+Generate DNA dataset with average element length scaling and for different degenerate symbol probabilities
 
 ```bash
-while read ELM_LEN; do python3 random_eds.py --length 1600000 --alphabet D --deg-prob 0.1 --segment-size-avg 5 --segment-size-max 10 --element-len-avg $ELM_LEN --decorate-output "synth-elm-len-avg"; done < elm-len-avg.list
+while read PROB; do while read ELM_LEN; do python3 random_eds.py --length 1600000 --alphabet D --deg-prob $PROB --segment-size-avg 5 --segment-size-max 10 --element-len-avg $ELM_LEN --decorate-output "synth-elm-len-avg"; done < elm-len-avg.list; done < elm-len-avg.deg-prob.list 
+```
+
+
+Generate simple DNA string (no degenerate segments) - for testing BNDM only
+```bash
+while read LEN; do python3 random_eds.py --length $LEN --deg-prob 0.0 --segment-size-avg 0 --segment-size-max 0 --element-len-avg 0 --element-len-max 0 --decorate-output "synth-nodeg"; done < lengths.list
 ```
