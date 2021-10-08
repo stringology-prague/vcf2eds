@@ -71,8 +71,11 @@ if __name__ == "__main__":
     parser = OptionParser()
 
     parser.add_option('-l', '--length', dest="length",
-                      default=1000, metavar='NUMBER', type='int',
+                      metavar='NUMBER', type='int',
                       help="Length of EDS - degenerate segments add to length with its longest element")
+    parser.add_option('-s', '--size', dest="size",
+                      metavar='NUMBER', type='int',
+                      help="Size of EDS - degenerate segments add to size with sum of all element lengths")
 
     parser.add_option('--decorate-output', dest="decorateoutput",
                       default=False, action='store_true',
@@ -128,6 +131,11 @@ if __name__ == "__main__":
     if options.alphabet and options.freqfile:
         raise Exception('Cannot specify alphabet and weights file at the same time; weights file defines alphabet.')
 
+    if options.size and options.length:
+        raise Exception('Cannot specify EDS length and EDS size at the same time!')
+    elif not options.size and not options.length:
+        raise Exception('Must specify one of EDS length or EDS size!')
+
     alphabet = DNA_ALPHABET
     if options.alphabet == 'P':
         alphabet = PROTEIN_ALPHABET
@@ -144,16 +152,8 @@ if __name__ == "__main__":
     if options.deg_prob < 0 or options.deg_prob > 1:
         raise Exception('Probability can be only from interval [0, 1] including 0 and 1.')
 
-    output_fname = args[0]
-    if options.decorateoutput:
-        output_fname = f"{output_fname}_" \
-                       f"p={options.deg_prob:0.5f}_" \
-                       f"r={options.reds_prob:0.5f}_" \
-                       f"s={options.segment_size_avg:07.2f}_" \
-                       f"e={options.element_len_avg:07.2f}_" \
-                       f"l={options.length:010}.eds"
-
     print('  EDS length: {}'.format(options.length))
+    print('  EDS size: {}'.format(options.size))
     print('  Alphabet: {} [{}]'.format(options.alphabet, alphabet))
     print('  Weights: {} {}'.format(options.freqfile, weights))
     print('  Degenerate segment probability: {}'.format(options.deg_prob))
@@ -167,11 +167,11 @@ if __name__ == "__main__":
     print('  Element length - gauss distribution standard deviation: {}'.format(options.element_len_stdev))
     print('  Element length - maximum: {}'.format(options.element_len_max))
     print('  EDS output file: {}'.format(args[0]))
-    print('  EDS output file decorated: {}'.format(output_fname))
 
     eds_str = ''
-    i = 0
-    while i < options.length:
+    true_length = 0
+    true_size = 0
+    while true_length < options.length if options.length else true_size < options.size:
         if random.random() < options.deg_prob:
             # degenerate segment
             avg_settings = AverageSettings(options.element_len_avg,
@@ -188,10 +188,24 @@ if __name__ == "__main__":
                 eds_str += '{' + ','.join(degenerate_segment) + '}'
 
             # TODO recursive segments include special characters '{', ',' and '}' in the total sub-segment length
-            i += max([len(s) for s in degenerate_segment])
+            true_length += max([len(s) for s in degenerate_segment])
+            true_size += sum([len(s) for s in degenerate_segment])
         else:
             eds_str += random.choices(alphabet, weights=weights, k=1)[0]
-            i += 1
+            true_length += 1
+            true_size += 1
+
+    output_fname = args[0]
+    if options.decorateoutput:
+        output_fname = f"{output_fname}_" \
+                       f"p={options.deg_prob:0.5f}_" \
+                       f"r={options.reds_prob:0.5f}_" \
+                       f"s={options.segment_size_avg:07.2f}_" \
+                       f"e={options.element_len_avg:07.2f}_" \
+                       f"l={true_length:010}_" \
+                       f"N={true_size:010}" \
+                       f".eds"
+        print('  EDS output file decorated: {}'.format(output_fname))
 
     with open(output_fname, "w") as f:
         f.write(eds_str)
