@@ -198,7 +198,7 @@ if __name__ == "__main__":
     output_fname = args[0]
     if options.decorateoutput:
         output_fname = f"{output_fname}_" \
-                       f"p={options.deg_prob:0.5f}_" \
+                       f"p={options.deg_prob:0.10f}_" \
                        f"r={options.reds_prob:0.5f}_" \
                        f"s={options.segment_size_avg:07.2f}_" \
                        f"e={options.element_len_avg:07.2f}_" \

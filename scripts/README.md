@@ -16,10 +16,16 @@ while read LEN; do python3 random_eds.py --length $LEN --freq-file protein.freq 
 
 ### Degenerate probability scaling datasets
 
-Generate DNA dataset with degenerate symbol probability scaling 
+Generate DNA dataset with degenerate symbol probability scaling , the overall LENGTH is fixed
 
 ```bash
 while read PROB; do python3 random_eds.py --length 1600000 --alphabet D --deg-prob $PROB --segment-size-avg 5 --segment-size-max 10 --element-len-avg 5 --element-len-max 10 --decorate-output "synth-prob"; done < deg-prob.list
+```
+
+Generate DNA dataset with degenerate symbol probability scaling , the overall SIZE is fixed
+
+```bash
+while read PROB; do python3 random_eds.py --size 3200000 --alphabet D --deg-prob $PROB --segment-size-avg 5 --segment-size-max 10 --element-len-avg 5 --element-len-max 10 --decorate-output "synth-prob-fix-size"; done < deg-prob.list
 ```
 
 ### Segment size scaling datasets
